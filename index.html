@@ -18,6 +18,9 @@
     input { padding: 6px; width: 150px; }
     button { padding: 6px 12px; cursor: pointer; }
     table { width: 100%; margin-top: 20px; background-color: white; }
+    th, td { text-align: center; padding: 6px; border: 1px solid #ccc; }
+    th { background-color: #333; color: white; cursor: pointer; }
+    tr:nth-child(even) { background-color: #f9f9f9; }
   </style>
 </head>
 <body>
@@ -99,28 +102,19 @@
 
           document.getElementById('status').innerText = `✅ ${dados.length} criptomoedas encontradas.`;
 
-          // ⚠️ Destrói e recria DataTable se já existir
+          // ⚠️ Destrói DataTable se já existir
           if ($.fn.DataTable.isDataTable('#tabela')) {
             $('#tabela').DataTable().clear().destroy();
           }
 
-          // ✅ Cria DataTable com ordenação
+          // ✅ Cria DataTable com ordenação e sem paginação
           $('#tabela').DataTable({
             ordering: true,
-            pageLength: 25,
+            paging: false,
+            searching: false,
+            info: false,
             language: {
-              search: "🔍 Buscar:",
-              lengthMenu: "Mostrar _MENU_ entradas por página",
-              zeroRecords: "Nenhum resultado encontrado",
-              info: "Mostrando _START_ a _END_ de _TOTAL_ registros",
-              infoEmpty: "Nenhum dado disponível",
-              infoFiltered: "(filtrado de _MAX_ registros)",
-              paginate: {
-                first: "Primeiro",
-                last: "Último",
-                next: "Próximo",
-                previous: "Anterior"
-              }
+              emptyTable: "Sem dados disponíveis"
             }
           });
         })
