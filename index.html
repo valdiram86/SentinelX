@@ -1,11 +1,11 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Criptomoedas Selecionadas</title>
 
-  <!-- ✅ DataTables CSS -->
-  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+  <!-- ✅ Estilo DataTables -->
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css" />
 
   <style>
     body {
@@ -17,10 +17,25 @@
     label, input, button { margin: 5px; }
     input { padding: 6px; width: 150px; }
     button { padding: 6px 12px; cursor: pointer; }
-    table { width: 100%; margin-top: 20px; background-color: white; }
-    th, td { text-align: center; padding: 6px; border: 1px solid #ccc; }
-    th { background-color: #333; color: white; cursor: pointer; }
-    tr:nth-child(even) { background-color: #f9f9f9; }
+    table {
+      width: 100%;
+      margin-top: 20px;
+      border-collapse: collapse;
+      background-color: white;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 6px;
+      text-align: center;
+    }
+    th {
+      background-color: #333;
+      color: white;
+      cursor: pointer;
+    }
+    tr:nth-child(even) {
+      background-color: #f9f9f9;
+    }
   </style>
 </head>
 <body>
@@ -38,14 +53,14 @@
 
   <button onclick="buscar()">Buscar</button>
 
-  <div id="status"></div>
+  <div id="status" style="margin-top: 10px;"></div>
 
   <table id="tabela" class="display">
     <thead><tr id="cabecalho"></tr></thead>
     <tbody id="corpo"></tbody>
   </table>
 
-  <!-- ✅ jQuery + DataTables JS -->
+  <!-- ✅ jQuery + DataTables -->
   <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
   <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
 
@@ -65,21 +80,21 @@
         .then(json => {
           const dados = json.dados || [];
 
-          if (dados.length === 0) {
-            document.getElementById('status').innerText = '⚠️ Nenhum resultado encontrado.';
-            return;
-          }
+          // Mostra contagem
+          document.getElementById('status').innerText = `✅ ${dados.length} criptomoedas encontradas.`;
 
           // Cabeçalho
           const cabecalho = document.getElementById('cabecalho');
           cabecalho.innerHTML = '';
-          Object.keys(dados[0]).forEach(col => {
-            const th = document.createElement('th');
-            th.innerText = col === 'Variação' ? 'VARIAÇÃO VARIAÇÃO' : col;
-            cabecalho.appendChild(th);
-          });
+          if (dados.length > 0) {
+            Object.keys(dados[0]).forEach(col => {
+              const th = document.createElement('th');
+              th.innerText = col === 'Variação' ? 'VARIAÇÃO VARIAÇÃO' : col;
+              cabecalho.appendChild(th);
+            });
+          }
 
-          // Corpo
+          // Corpo da tabela
           const corpo = document.getElementById('corpo');
           corpo.innerHTML = '';
           dados.forEach(linha => {
@@ -100,14 +115,12 @@
             corpo.appendChild(tr);
           });
 
-          document.getElementById('status').innerText = `✅ ${dados.length} criptomoedas encontradas.`;
-
-          // ⚠️ Destrói DataTable se já existir
+          // 🔄 Remove DataTable se já estiver ativo
           if ($.fn.DataTable.isDataTable('#tabela')) {
             $('#tabela').DataTable().clear().destroy();
           }
 
-          // ✅ Cria DataTable com ordenação e sem paginação
+          // ✅ Cria DataTable sem paginação, mas com ordenação
           $('#tabela').DataTable({
             ordering: true,
             paging: false,
@@ -124,6 +137,7 @@
         });
     }
 
+    // Carregar ao abrir
     window.onload = buscar;
   </script>
 </body>
