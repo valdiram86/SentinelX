@@ -80,7 +80,6 @@
         .then(json => {
           const dados = json.dados || [];
 
-          // Mostra contagem
           document.getElementById('status').innerText = `✅ ${dados.length} criptomoedas encontradas.`;
 
           // Cabeçalho
@@ -94,14 +93,16 @@
             });
           }
 
-          // Corpo da tabela
+          // Corpo
           const corpo = document.getElementById('corpo');
           corpo.innerHTML = '';
           dados.forEach(linha => {
             const tr = document.createElement('tr');
             Object.values(linha).forEach(valor => {
               const td = document.createElement('td');
-              if (typeof valor === 'string' && valor.startsWith('http')) {
+              if (valor === null || valor === undefined) {
+                td.innerText = '-';
+              } else if (typeof valor === 'string' && valor.startsWith('http')) {
                 const link = document.createElement('a');
                 link.href = valor;
                 link.innerText = '🔗 Link';
@@ -115,12 +116,11 @@
             corpo.appendChild(tr);
           });
 
-          // 🔄 Remove DataTable se já estiver ativo
+          // Recria DataTable com ordenação e sem paginação
           if ($.fn.DataTable.isDataTable('#tabela')) {
             $('#tabela').DataTable().clear().destroy();
           }
 
-          // ✅ Cria DataTable sem paginação, mas com ordenação
           $('#tabela').DataTable({
             ordering: true,
             paging: false,
@@ -137,7 +137,7 @@
         });
     }
 
-    // Carregar ao abrir
+    // Executa ao carregar a página
     window.onload = buscar;
   </script>
 </body>
