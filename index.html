@@ -92,11 +92,13 @@
 
           if (!dados || dados.length === 0) {
             document.getElementById('status').innerText = '⚠️ Nenhum resultado encontrado.';
-            $('#tabela').DataTable().clear().draw();
+            if ($.fn.DataTable.isDataTable('#tabela')) {
+              $('#tabela').DataTable().clear().draw();
+            }
             return;
           }
 
-          // Cabeçalho
+          // Cabeçalhos
           const colunas = Object.keys(dados[0]);
           colunas.forEach(col => {
             const th = document.createElement('th');
@@ -104,30 +106,26 @@
             cabecalho.appendChild(th);
           });
 
-          // Corpo
+          // Montar linhas HTML
+          let linhasHTML = "";
           dados.forEach(linha => {
-            const tr = document.createElement('tr');
+            let linhaHTML = "<tr>";
             colunas.forEach(col => {
-              const td = document.createElement('td');
               const valor = linha[col];
-
               if (typeof valor === 'string' && valor.startsWith('http')) {
-                const link = document.createElement('a');
-                link.href = valor;
-                link.innerText = '🔗 Link';
-                link.target = '_blank';
-                link.style.color = '#0066cc';
-                td.appendChild(link);
+                linhaHTML += `<td><a href="${valor}" target="_blank" style="color:#0066cc">🔗 Link</a></td>`;
               } else {
-                td.innerText = valor;
+                linhaHTML += `<td>${valor}</td>`;
               }
-              tr.appendChild(td);
             });
-            corpo.appendChild(tr);
+            linhaHTML += "</tr>";
+            linhasHTML += linhaHTML;
           });
 
+          corpo.innerHTML = linhasHTML;
           document.getElementById('status').innerText = `✅ ${dados.length} criptomoedas encontradas.`;
 
+          // Inicializar DataTables
           if ($.fn.DataTable.isDataTable('#tabela')) {
             $('#tabela').DataTable().clear().destroy();
           }
@@ -155,4 +153,4 @@
     window.onload = buscar;
   </script>
 </body>
-</html>
+  </html>
