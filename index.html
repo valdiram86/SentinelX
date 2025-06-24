@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Tabela Cripto Dinâmica</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    input { margin: 5px; padding: 5px; width: 180px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    th, td { padding: 8px; border: 1px solid #ccc; text-align: left; }
+    th.sortable:hover { background-color: #f0f0f0; cursor: pointer; }
+    .highlight { font-weight: bold; color: #007bff; }
+  </style>
+</head>
+<body>
+
+<h2>📊 Filtro e Busca</h2>
+<input type="text" id="buscaVolume" placeholder="Volume (ex: >1000 ou +3)" />
+<input type="text" id="buscaMCap" placeholder="MCap (ex: <5000000 ou -5)" />
+<button onclick="filtrarTabela()">Filtrar</button>
+
+<table id="dataTable">
+  <thead>
+    <tr>
+      <th class="sortable" onclick="ordenar('id')">ID</th>
+      <th class="sortable" onclick="ordenar('nome')">Nome</th>
+      <th class="sortable" onclick="ordenar('volume')">Volume</th>
+      <th class="sortable" onclick="ordenar('mcap')">Market Cap</th>
+      <th class="sortable" onclick="ordenar('var')">Variação</th>
+    </tr>
+  </thead>
+  <tbody></tbody>
+</table>
+
+<script>
+  const API_URL = 'https://script.google.com/macros/s/AKfycbwjG0k4AFcwm4B-Hcx7yav0fuLPBR9BniOIa-cCq9YWDac3bz_kAUyl2YMdg3b2uxob/exec';
+
+  let dados = [], dadosVisiveis = [];
+  let direcao = {};
+
+  function carregarDados() {
+    fetch(API_URL)
+      .then(r => r.json())
+      .then(json => {
+        // Espera-se um array de objetos [{ id, nome, volume, mcap, var }]
+        dados = json;
+        dadosVisiveis = [...dados];
+        renderizarTabela();
+      })
+      .catch(e => {
+        alert("Erro ao buscar dados: " + e);
+      });
+  }
+
+  function renderizarTabela() {
+    const tbody = document.querySelector("#dataTable tbody");
+    tbody.innerHTML = "";
+    dadosVisiveis.forEach(d => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${d.id}</td>
+        <td>${d.nome}</td>
+        <td>${Number(d.volume).toLocaleString()}</td>
+        <td>${Number(d.mcap).toLocaleString()}</td>
+        <td class="highlight">${d.var}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  function ordenar(campo) {
+    const sentido = direcao[campo] === 'asc' ? 'desc' : 'asc';
+    direcao[campo] = sentido;
+    dadosVisiveis.sort((a, b) => {
+      let v1 = typeof a[campo] === 'string' ? a[campo] : parseFloat(a[campo]);
+      let v2 = typeof b[campo] === 'string' ? b[campo] : parseFloat(b[campo]);
+      return sentido === 'asc' ? v1 - v2 : v2 - v1;
+    });
+    renderizarTabela();
+  }
+
+  function interpretarFiltro(valor, campo) {
+    if (!valor) return () => true;
+    const m = valor.match(/^([<>]=?|[+-])?\s*(\d+(\.\d+)?)/);
+    if (!m) return () => true;
+    const op = m[1] || '=';
+    const val = parseFloat(m[2]);
+
+    switch (op) {
+      case '+': return x => parseFloat(x[campo]) >= val;
+      case '-': return x => parseFloat(x[campo]) <= -val;
+      case '>': return x => parseFloat(x[campo]) > val;
+      case '<': return x => parseFloat(x[campo]) < val;
+      case '>=': return x => parseFloat(x[campo]) >= val;
+      case '<=': return x => parseFloat(x[campo]) <= val;
+      default: return x => parseFloat(x[campo]) === val;
+    }
+  }
+
+  function filtrarTabela() {
+    const fVol = document.getElementById('buscaVolume').value;
+    const fCap = document.getElementById('buscaMCap').value;
+
+    const volFiltro = interpretarFiltro(fVol, 'volume');
+    const capFiltro = interpretarFiltro(fCap, 'mcap');
+
+    dadosVisiveis = dados.filter(c => volFiltro(c) && capFiltro(c));
+    renderizarTabela();
+  }
+
+  // Inicializa
+  carregarDados();
+</script>
+
+</body>
+        </html>
