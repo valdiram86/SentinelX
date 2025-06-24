@@ -45,26 +45,31 @@
     table.dataTable tbody tr:nth-child(even) {
       background-color: #f9f9f9;
     }
+    .filtros {
+      margin-bottom: 10px;
+    }
   </style>
 </head>
 
 <body>
   <h2>🔎 Filtrar Criptomoedas Selecionadas</h2>
 
-  <label for="minVolume">Volume mínimo (USD):</label>
-  <input type="number" id="minVolume" value="1000000">
+  <div class="filtros">
+    <label for="minVolume">Volume mínimo (USD):</label>
+    <input type="number" id="minVolume" value="1000000">
 
-  <label for="minCap">Market Cap mínimo (USD):</label>
-  <input type="number" id="minCap" value="10000000">
+    <label for="minCap">Market Cap mínimo (USD):</label>
+    <input type="number" id="minCap" value="10000000">
 
-  <label for="minVar">Variação mínima (%):</label>
-  <input type="number" id="minVar" value="3" step="0.1">
+    <label for="minVar">Variação mínima (%):</label>
+    <input type="number" id="minVar" value="3" step="0.1">
 
-  <button onclick="buscar()">Buscar</button>
+    <button onclick="buscar()">Buscar</button>
+  </div>
 
   <div id="status"></div>
 
-  <table id="tabela" class="display" style="width:100%">
+  <table id="tabela" class="display nowrap" style="width:100%">
     <thead><tr id="cabecalho"></tr></thead>
     <tbody id="corpo"></tbody>
   </table>
@@ -87,9 +92,6 @@
           const cabecalho = document.getElementById('cabecalho');
           const corpo = document.getElementById('corpo');
 
-          cabecalho.innerHTML = '';
-          corpo.innerHTML = '';
-
           if (!dados || dados.length === 0) {
             document.getElementById('status').innerText = '⚠️ Nenhum resultado encontrado.';
             if ($.fn.DataTable.isDataTable('#tabela')) {
@@ -98,7 +100,15 @@
             return;
           }
 
-          // Cabeçalhos
+          // Destruir tabela existente (se já existir)
+          if ($.fn.DataTable.isDataTable('#tabela')) {
+            $('#tabela').DataTable().destroy();
+          }
+
+          cabecalho.innerHTML = '';
+          corpo.innerHTML = '';
+
+          // Criar cabeçalhos
           const colunas = Object.keys(dados[0]);
           colunas.forEach(col => {
             const th = document.createElement('th');
@@ -106,10 +116,10 @@
             cabecalho.appendChild(th);
           });
 
-          // Montar linhas HTML
-          let linhasHTML = "";
+          // Montar corpo da tabela
+          let linhasHTML = '';
           dados.forEach(linha => {
-            let linhaHTML = "<tr>";
+            let linhaHTML = '<tr>';
             colunas.forEach(col => {
               const valor = linha[col];
               if (typeof valor === 'string' && valor.startsWith('http')) {
@@ -118,23 +128,18 @@
                 linhaHTML += `<td>${valor}</td>`;
               }
             });
-            linhaHTML += "</tr>";
+            linhaHTML += '</tr>';
             linhasHTML += linhaHTML;
           });
 
           corpo.innerHTML = linhasHTML;
-          document.getElementById('status').innerText = `✅ ${dados.length} criptomoedas encontradas.`;
 
-          // Inicializar DataTables
-          if ($.fn.DataTable.isDataTable('#tabela')) {
-            $('#tabela').DataTable().clear().destroy();
-          }
-
+          // Recriar DataTable
           $('#tabela').DataTable({
             destroy: true,
             paging: false,
             dom: 'Bfrtip',
-            buttons: ['copy', 'csv', 'excel', 'pdf'],
+            buttons: ['copy', 'csv'],
             language: {
               search: "🔍 Buscar símbolo:",
               zeroRecords: "Nada encontrado",
@@ -143,6 +148,8 @@
               infoFiltered: ""
             }
           });
+
+          document.getElementById('status').innerText = `✅ ${dados.length} criptomoedas encontradas.`;
         })
         .catch(err => {
           console.error(err);
@@ -153,4 +160,4 @@
     window.onload = buscar;
   </script>
 </body>
-  </html>
+</html>
