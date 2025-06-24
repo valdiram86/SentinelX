@@ -1,116 +1,131 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <title>Tabela Cripto Dinâmica</title>
+  <meta charset="UTF-8" />
+  <title>Criptomoedas Selecionadas</title>
   <style>
-    body { font-family: Arial, sans-serif; margin: 20px; }
-    input { margin: 5px; padding: 5px; width: 180px; }
-    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-    th, td { padding: 8px; border: 1px solid #ccc; text-align: left; }
-    th.sortable:hover { background-color: #f0f0f0; cursor: pointer; }
-    .highlight { font-weight: bold; color: #007bff; }
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f4;
+      padding: 20px;
+    }
+    h2 {
+      margin-bottom: 10px;
+    }
+    label, input, button {
+      margin: 5px;
+    }
+    input {
+      padding: 6px;
+      width: 150px;
+    }
+    button {
+      padding: 6px 12px;
+      cursor: pointer;
+    }
+    table {
+      width: 100%;
+      margin-top: 20px;
+      border-collapse: collapse;
+      background-color: white;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 6px;
+      text-align: center;
+    }
+    th {
+      background-color: #333;
+      color: white;
+    }
+    tr:nth-child(even) {
+      background-color: #f9f9f9;
+    }
   </style>
 </head>
 <body>
 
-<h2>📊 Filtro e Busca</h2>
-<input type="text" id="buscaVolume" placeholder="Volume (ex: >1000 ou +3)" />
-<input type="text" id="buscaMCap" placeholder="MCap (ex: <5000000 ou -5)" />
-<button onclick="filtrarTabela()">Filtrar</button>
+  <h2>🔎 Filtrar Criptomoedas Selecionadas</h2>
 
-<table id="dataTable">
-  <thead>
-    <tr>
-      <th class="sortable" onclick="ordenar('id')">ID</th>
-      <th class="sortable" onclick="ordenar('nome')">Nome</th>
-      <th class="sortable" onclick="ordenar('volume')">Volume</th>
-      <th class="sortable" onclick="ordenar('mcap')">Market Cap</th>
-      <th class="sortable" onclick="ordenar('var')">Variação</th>
-    </tr>
-  </thead>
-  <tbody></tbody>
-</table>
+  <label for="minVolume">Volume mínimo (USD):</label>
+  <input type="number" id="minVolume" value="1000000">
 
-<script>
-  const API_URL = 'https://script.google.com/macros/s/AKfycbwjG0k4AFcwm4B-Hcx7yav0fuLPBR9BniOIa-cCq9YWDac3bz_kAUyl2YMdg3b2uxob/exec';
+  <label for="minCap">Market Cap mínimo (USD):</label>
+  <input type="number" id="minCap" value="10000000">
 
-  let dados = [], dadosVisiveis = [];
-  let direcao = {};
+  <label for="minVar">Variação mínima (%):</label>
+  <input type="number" id="minVar" value="3" step="0.1">
 
-  function carregarDados() {
-    fetch(API_URL)
-      .then(r => r.json())
-      .then(json => {
-        // Espera-se um array de objetos [{ id, nome, volume, mcap, var }]
-        dados = json;
-        dadosVisiveis = [...dados];
-        renderizarTabela();
-      })
-      .catch(e => {
-        alert("Erro ao buscar dados: " + e);
-      });
-  }
+  <button onclick="buscar()">Buscar</button>
 
-  function renderizarTabela() {
-    const tbody = document.querySelector("#dataTable tbody");
-    tbody.innerHTML = "";
-    dadosVisiveis.forEach(d => {
-      const tr = document.createElement("tr");
-      tr.innerHTML = `
-        <td>${d.id}</td>
-        <td>${d.nome}</td>
-        <td>${Number(d.volume).toLocaleString()}</td>
-        <td>${Number(d.mcap).toLocaleString()}</td>
-        <td class="highlight">${d.var}</td>
-      `;
-      tbody.appendChild(tr);
-    });
-  }
+  <div id="status"></div>
 
-  function ordenar(campo) {
-    const sentido = direcao[campo] === 'asc' ? 'desc' : 'asc';
-    direcao[campo] = sentido;
-    dadosVisiveis.sort((a, b) => {
-      let v1 = typeof a[campo] === 'string' ? a[campo] : parseFloat(a[campo]);
-      let v2 = typeof b[campo] === 'string' ? b[campo] : parseFloat(b[campo]);
-      return sentido === 'asc' ? v1 - v2 : v2 - v1;
-    });
-    renderizarTabela();
-  }
+  <table id="tabela">
+    <thead><tr id="cabecalho"></tr></thead>
+    <tbody id="corpo"></tbody>
+  </table>
 
-  function interpretarFiltro(valor, campo) {
-    if (!valor) return () => true;
-    const m = valor.match(/^([<>]=?|[+-])?\s*(\d+(\.\d+)?)/);
-    if (!m) return () => true;
-    const op = m[1] || '=';
-    const val = parseFloat(m[2]);
+  <script>
+    const API_URL = 'https://script.google.com/macros/s/AKfycbwjG0k4AFcwm4B-Hcx7yav0fuLPBR9BniOIa-cCq9YWDac3bz_kAUyl2YMdg3b2uxob/exec';
 
-    switch (op) {
-      case '+': return x => parseFloat(x[campo]) >= val;
-      case '-': return x => parseFloat(x[campo]) <= -val;
-      case '>': return x => parseFloat(x[campo]) > val;
-      case '<': return x => parseFloat(x[campo]) < val;
-      case '>=': return x => parseFloat(x[campo]) >= val;
-      case '<=': return x => parseFloat(x[campo]) <= val;
-      default: return x => parseFloat(x[campo]) === val;
+    function buscar() {
+      const minVolume = document.getElementById('minVolume').value || 0;
+      const minCap = document.getElementById('minCap').value || 0;
+      const minVar = document.getElementById('minVar').value || 0;
+
+      const url = `${API_URL}?minVolume=${minVolume}&minCap=${minCap}&minVarPercent=${minVar}`;
+      document.getElementById('status').innerText = '🔄 Buscando dados...';
+
+      fetch(url)
+        .then(res => res.json())
+        .then(json => {
+          const dados = json.dados;
+          const cabecalho = document.getElementById('cabecalho');
+          const corpo = document.getElementById('corpo');
+
+          cabecalho.innerHTML = '';
+          corpo.innerHTML = '';
+
+          if (dados.length === 0) {
+            document.getElementById('status').innerText = '⚠️ Nenhum resultado encontrado.';
+            return;
+          }
+
+          // Cabeçalho
+          Object.keys(dados[0]).forEach(col => {
+            const th = document.createElement('th');
+            th.innerText = col;
+            cabecalho.appendChild(th);
+          });
+
+          // Linhas
+          dados.forEach(linha => {
+            const tr = document.createElement('tr');
+            Object.values(linha).forEach(valor => {
+              const td = document.createElement('td');
+              if (typeof valor === 'string' && valor.startsWith('http')) {
+                const link = document.createElement('a');
+                link.href = valor;
+                link.innerText = '🔗 Link';
+                link.target = '_blank';
+                td.appendChild(link);
+              } else {
+                td.innerText = valor;
+              }
+              tr.appendChild(td);
+            });
+            corpo.appendChild(tr);
+          });
+
+          document.getElementById('status').innerText = `✅ ${dados.length} criptomoedas encontradas.`;
+        })
+        .catch(err => {
+          console.error(err);
+          document.getElementById('status').innerText = '❌ Erro ao buscar os dados.';
+        });
     }
-  }
 
-  function filtrarTabela() {
-    const fVol = document.getElementById('buscaVolume').value;
-    const fCap = document.getElementById('buscaMCap').value;
-
-    const volFiltro = interpretarFiltro(fVol, 'volume');
-    const capFiltro = interpretarFiltro(fCap, 'mcap');
-
-    dadosVisiveis = dados.filter(c => volFiltro(c) && capFiltro(c));
-    renderizarTabela();
-  }
-
-  // Inicializa
-  carregarDados();
-</script>
-
+    window.onload = buscar;
+  </script>
 </body>
-        </html>
+  </html>
