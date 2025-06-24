@@ -37,6 +37,7 @@
     th {
       background-color: #333;
       color: white;
+      cursor: pointer;
     }
     tr:nth-child(even) {
       background-color: #f9f9f9;
@@ -56,6 +57,11 @@
   <label for="minVar">Variação mínima (%):</label>
   <input type="number" id="minVar" value="3" step="0.1">
 
+  <br>
+
+  <label for="buscaCap">Buscar Market Cap (texto):</label>
+  <input type="text" id="buscaCap" oninput="filtrarPorTexto()" placeholder="Ex: 500M ou Bitcoin">
+
   <button onclick="buscar()">Buscar</button>
 
   <div id="status"></div>
@@ -67,6 +73,7 @@
 
   <script>
     const API_URL = 'https://script.google.com/macros/s/AKfycbyrETXvYZTVrno4GJAHOErpaNqOhH05RMapm7TnpjNp50Y-KeQoLyl2tiW0QQXMdFGi/exec';
+    let dadosGlobais = [];
 
     function buscar() {
       const minVolume = document.getElementById('minVolume').value || 0;
@@ -80,21 +87,23 @@
         .then(res => res.json())
         .then(json => {
           const dados = json.dados;
+          dadosGlobais = dados; // Armazena para busca
           const cabecalho = document.getElementById('cabecalho');
           const corpo = document.getElementById('corpo');
 
           cabecalho.innerHTML = '';
           corpo.innerHTML = '';
 
-          if (dados.length === 0) {
+          if (!dados || dados.length === 0) {
             document.getElementById('status').innerText = '⚠️ Nenhum resultado encontrado.';
             return;
           }
 
-          // Cabeçalho
+          // Cabeçalho com ordenação
           Object.keys(dados[0]).forEach(col => {
             const th = document.createElement('th');
-            th.innerText = col;
+            th.innerText = col === 'Variação' ? 'VARIAÇÃO VARIAÇÃO' : col;
+            th.onclick = () => ordenarTabela(col);
             cabecalho.appendChild(th);
           });
 
@@ -123,6 +132,70 @@
           console.error(err);
           document.getElementById('status').innerText = '❌ Erro ao buscar os dados.';
         });
+    }
+
+    function ordenarTabela(coluna) {
+      const dadosOrdenados = [...dadosGlobais].sort((a, b) => {
+        if (!isNaN(parseFloat(a[coluna])) && !isNaN(parseFloat(b[coluna]))) {
+          return parseFloat(b[coluna]) - parseFloat(a[coluna]);
+        } else {
+          return String(a[coluna]).localeCompare(String(b[coluna]));
+        }
+      });
+      dadosGlobais = dadosOrdenados;
+      renderizarTabela();
+    }
+
+    function renderizarTabela() {
+      const cabecalho = document.getElementById('cabecalho');
+      const corpo = document.getElementById('corpo');
+      corpo.innerHTML = '';
+
+      dadosGlobais.forEach(linha => {
+        const tr = document.createElement('tr');
+        Object.values(linha).forEach(valor => {
+          const td = document.createElement('td');
+          if (typeof valor === 'string' && valor.startsWith('http')) {
+            const link = document.createElement('a');
+            link.href = valor;
+            link.innerText = '🔗 Link';
+            link.target = '_blank';
+            td.appendChild(link);
+          } else {
+            td.innerText = valor;
+          }
+          tr.appendChild(td);
+        });
+        corpo.appendChild(tr);
+      });
+    }
+
+    function filtrarPorTexto() {
+      const texto = document.getElementById('buscaCap').value.toLowerCase();
+      const filtrados = dadosGlobais.filter(item => {
+        return Object.values(item).some(v =>
+          String(v).toLowerCase().includes(texto)
+        );
+      });
+      const corpo = document.getElementById('corpo');
+      corpo.innerHTML = '';
+      filtrados.forEach(linha => {
+        const tr = document.createElement('tr');
+        Object.values(linha).forEach(valor => {
+          const td = document.createElement('td');
+          if (typeof valor === 'string' && valor.startsWith('http')) {
+            const link = document.createElement('a');
+            link.href = valor;
+            link.innerText = '🔗 Link';
+            link.target = '_blank';
+            td.appendChild(link);
+          } else {
+            td.innerText = valor;
+          }
+          tr.appendChild(td);
+        });
+        corpo.appendChild(tr);
+      });
     }
 
     window.onload = buscar;
