@@ -1,121 +1,158 @@
-<!DOCTYPE html>    <html lang="pt-BR">    
-<head>    
-  <meta charset="UTF-8" />    
-  <title>Criptomoedas Selecionadas</title>    
-  <style>    
-    body {    
-      font-family: Arial, sans-serif;    
-      background-color: #f4f4f4;    
-      padding: 20px;    
-    }    
-    h2 {    
-      margin-bottom: 10px;    
-    }    
-    label, input, button {    
-      margin: 5px;    
-    }    
-    input {    
-      padding: 6px;    
-      width: 150px;    
-    }    
-    button {    
-      padding: 6px 12px;    
-      cursor: pointer;    
-    }    
-    table {    
-      width: 100%;    
-      margin-top: 20px;    
-      border-collapse: collapse;    
-      background-color: white;    
-    }    
-    th, td {    
-      border: 1px solid #ccc;    
-      padding: 6px;    
-      text-align: center;    
-    }    
-    th {    
-      background-color: #333;    
-      color: white;    
-    }    
-    tr:nth-child(even) {    
-      background-color: #f9f9f9;    
-    }    
-  </style>    
-</head>    
-<body>      <h2>🔎 Filtrar Criptomoedas Selecionadas</h2>    <label for="minVolume">Volume mínimo (USD):</label>
-<input type="number" id="minVolume" value="1000000">
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>Criptomoedas Selecionadas</title>
 
-<label for="minCap">Market Cap mínimo (USD):</label>
-<input type="number" id="minCap" value="10000000">
+  <!-- DataTables + Botões -->
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+  <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.dataTables.min.css">
+  <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+  <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+  <script src="https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js"></script>
+  <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.html5.min.js"></script>
+  <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.print.min.js"></script>
 
-<label for="minVar">Variação mínima (%):</label>
-<input type="number" id="minVar" value="3" step="0.1">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f4;
+      padding: 20px;
+    }
+    h2 {
+      margin-bottom: 10px;
+    }
+    label, input, button {
+      margin: 5px;
+    }
+    input {
+      padding: 6px;
+      width: 150px;
+    }
+    button {
+      padding: 6px 12px;
+      cursor: pointer;
+    }
+    #status {
+      margin-top: 10px;
+      font-weight: bold;
+      color: #006699;
+    }
+    table.dataTable thead th {
+      background-color: #333;
+      color: white;
+    }
+    table.dataTable tbody tr:nth-child(even) {
+      background-color: #f9f9f9;
+    }
+  </style>
+</head>
 
-<button onclick="buscar()">Buscar</button>
+<body>
+  <h2>🔎 Filtrar Criptomoedas Selecionadas</h2>
 
-  <div id="status"></div>      <table id="tabela">    
-    <thead><tr id="cabecalho"></tr></thead>    
-    <tbody id="corpo"></tbody>    
-  </table>      <script>    
-    const API_URL = 'https://script.google.com/macros/s/AKfycbyrETXvYZTVrno4GJAHOErpaNqOhH05RMapm7TnpjNp50Y-KeQoLyl2tiW0QQXMdFGi/exec';    
-    
-    function buscar() {    
-      const minVolume = document.getElementById('minVolume').value || 0;    
-      const minCap = document.getElementById('minCap').value || 0;    
-      const minVar = document.getElementById('minVar').value || 0;    
-    
-      const url = `${API_URL}?minVolume=${minVolume}&minCap=${minCap}&minVarPercent=${minVar}`;    
-      document.getElementById('status').innerText = '🔄 Buscando dados...';    
-    
-      fetch(url)    
-        .then(res => res.json())    
-        .then(json => {    
-          const dados = json.dados;    
-          const cabecalho = document.getElementById('cabecalho');    
-          const corpo = document.getElementById('corpo');    
-    
-          cabecalho.innerHTML = '';    
-          corpo.innerHTML = '';    
-    
-          if (dados.length === 0) {    
-            document.getElementById('status').innerText = '⚠️ Nenhum resultado encontrado.';    
-            return;    
-          }    
-    
-          // Cabeçalho    
-          Object.keys(dados[0]).forEach(col => {    
-            const th = document.createElement('th');    
-            th.innerText = col;    
-            cabecalho.appendChild(th);    
-          });    
-    
-          // Linhas    
-          dados.forEach(linha => {    
-            const tr = document.createElement('tr');    
-            Object.values(linha).forEach(valor => {    
-              const td = document.createElement('td');    
-              if (typeof valor === 'string' && valor.startsWith('http')) {    
-                const link = document.createElement('a');    
-                link.href = valor;    
-                link.innerText = '🔗 Link';    
-                link.target = '_blank';    
-                td.appendChild(link);    
-              } else {    
-                td.innerText = valor;    
-              }    
-              tr.appendChild(td);    
-            });    
-            corpo.appendChild(tr);    
-          });    
-    
-          document.getElementById('status').innerText = `✅ ${dados.length} criptomoedas encontradas.`;    
-        })    
-        .catch(err => {    
-          console.error(err);    
-          document.getElementById('status').innerText = '❌ Erro ao buscar os dados.';    
-        });    
-    }    
-    
-    window.onload = buscar;    
-  </script>    </body>    
-</html>    
+  <label for="minVolume">Volume mínimo (USD):</label>
+  <input type="number" id="minVolume" value="1000000">
+
+  <label for="minCap">Market Cap mínimo (USD):</label>
+  <input type="number" id="minCap" value="10000000">
+
+  <label for="minVar">Variação mínima (%):</label>
+  <input type="number" id="minVar" value="3" step="0.1">
+
+  <button onclick="buscar()">Buscar</button>
+
+  <div id="status"></div>
+
+  <table id="tabela" class="display" style="width:100%">
+    <thead><tr id="cabecalho"></tr></thead>
+    <tbody id="corpo"></tbody>
+  </table>
+
+  <script>
+    const API_URL = 'https://script.google.com/macros/s/AKfycbyrETXvYZTVrno4GJAHOErpaNqOhH05RMapm7TnpjNp50Y-KeQoLyl2tiW0QQXMdFGi/exec';
+
+    function buscar() {
+      const minVolume = document.getElementById('minVolume').value || 0;
+      const minCap = document.getElementById('minCap').value || 0;
+      const minVar = document.getElementById('minVar').value || 0;
+
+      const url = `${API_URL}?minVolume=${minVolume}&minCap=${minCap}&minVarPercent=${minVar}`;
+      document.getElementById('status').innerText = '🔄 Buscando dados...';
+
+      fetch(url)
+        .then(res => res.json())
+        .then(json => {
+          const dados = json.dados;
+          const cabecalho = document.getElementById('cabecalho');
+          const corpo = document.getElementById('corpo');
+
+          cabecalho.innerHTML = '';
+          corpo.innerHTML = '';
+
+          if (!dados || dados.length === 0) {
+            document.getElementById('status').innerText = '⚠️ Nenhum resultado encontrado.';
+            $('#tabela').DataTable().clear().draw();
+            return;
+          }
+
+          // Cabeçalho
+          const colunas = Object.keys(dados[0]);
+          colunas.forEach(col => {
+            const th = document.createElement('th');
+            th.innerText = col;
+            cabecalho.appendChild(th);
+          });
+
+          // Corpo
+          dados.forEach(linha => {
+            const tr = document.createElement('tr');
+            colunas.forEach(col => {
+              const td = document.createElement('td');
+              const valor = linha[col];
+
+              if (typeof valor === 'string' && valor.startsWith('http')) {
+                const link = document.createElement('a');
+                link.href = valor;
+                link.innerText = '🔗 Link';
+                link.target = '_blank';
+                link.style.color = '#0066cc';
+                td.appendChild(link);
+              } else {
+                td.innerText = valor;
+              }
+              tr.appendChild(td);
+            });
+            corpo.appendChild(tr);
+          });
+
+          document.getElementById('status').innerText = `✅ ${dados.length} criptomoedas encontradas.`;
+
+          if ($.fn.DataTable.isDataTable('#tabela')) {
+            $('#tabela').DataTable().clear().destroy();
+          }
+
+          $('#tabela').DataTable({
+            destroy: true,
+            paging: false,
+            dom: 'Bfrtip',
+            buttons: ['copy', 'csv', 'excel', 'pdf'],
+            language: {
+              search: "🔍 Buscar símbolo:",
+              zeroRecords: "Nada encontrado",
+              info: "",
+              infoEmpty: "",
+              infoFiltered: ""
+            }
+          });
+        })
+        .catch(err => {
+          console.error(err);
+          document.getElementById('status').innerText = '❌ Erro ao buscar os dados.';
+        });
+    }
+
+    window.onload = buscar;
+  </script>
+</body>
+</html>
