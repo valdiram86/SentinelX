@@ -134,8 +134,8 @@
           dados.forEach(linha => {
             const altasMarketCap = contarAltasConsecutivas(linha.marketCapHistorico || []);
             const altasVolume = contarAltasConsecutivas(linha.volumeHistorico || []);
-            linha['📈 Tendência MarketCap'] = emojiSequencia(altasMarketCap);
-            linha['📊 Tendência Volume'] = emojiSequencia(altasVolume);
+            linha['M'] = emojiSequencia(altasMarketCap);
+            linha['V'] = emojiSequencia(altasVolume);
           });
 
           // Destruir tabela existente
