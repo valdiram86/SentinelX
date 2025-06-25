@@ -1,208 +1,127 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-  <meta charset="UTF-8" />
-  <title>Criptomoedas Selecionadas</title>
+<!-- ... (todo o resto do seu HTML permanece igual) -->
 
-  <!-- DataTables + Botões -->
-  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
-  <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.dataTables.min.css">
-  <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
-  <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
-  <script src="https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js"></script>
-  <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.html5.min.js"></script>
-  <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.print.min.js"></script>
+<table id="tabela" class="display nowrap" style="width:100%">
+  <thead><tr id="cabecalho"></tr></thead>
+  <tbody id="corpo"></tbody>
+</table>
 
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background-color: #f4f4f4;
-      padding: 20px;
-    }
-    h2 {
-      margin-bottom: 10px;
-    }
-    label, input, button {
-      margin: 5px;
-    }
-    input {
-      padding: 6px;
-      width: 150px;
-    }
-    button {
-      padding: 6px 12px;
-      cursor: pointer;
-    }
-    #status {
-      margin-top: 10px;
-      font-weight: bold;
-      color: #006699;
-    }
-    table.dataTable thead th {
-      background-color: #333;
-      color: white;
-    }
-    table.dataTable tbody tr:nth-child(even) {
-      background-color: #f9f9f9;
-    }
-    .filtros {
-      margin-bottom: 10px;
-    }
-    #btc-status {
-      font-size: 1.2em;
-      font-weight: bold;
-      margin-bottom: 12px;
-    }
-  </style>
-</head>
+<script>
+  const API_URL = 'https://script.google.com/macros/s/AKfycbxw1EnlhIP5om52_kd7pns-fHfwTa_5eJr9bVWPXNfyRLTeQAAgvwPJHXAOeufIcP5d/exec';
 
-<body>
-  <h2>🔎 Filtrar Criptomoedas Selecionadas</h2>
+  // Função para salvar anotação no localStorage
+  function salvarAnotacao(id, texto) {
+    localStorage.setItem(`anotacao_${id}`, texto);
+  }
 
-  <div class="filtros">
-    <label for="minVolume">Volume mínimo (USD):</label>
-    <input type="number" id="minVolume" value="1000000">
+  // Função para recuperar anotação do localStorage
+  function recuperarAnotacao(id) {
+    return localStorage.getItem(`anotacao_${id}`) || '';
+  }
 
-    <label for="minCap">Market Cap mínimo (USD):</label>
-    <input type="number" id="minCap" value="10000000">
+  function buscar() {
+    const minVolume = document.getElementById('minVolume').value || 0;
+    const minCap = document.getElementById('minCap').value || 0;
+    const minVar = document.getElementById('minVar').value || 0;
 
-    <label for="minVar">Variação mínima (%):</label>
-    <input type="number" id="minVar" value="3" step="0.1">
+    const url = `${API_URL}?minVolume=${minVolume}&minCap=${minCap}&minVarPercent=${minVar}`;
+    document.getElementById('status').innerText = '🔄 Buscando dados...';
 
-    <button onclick="buscar()">Buscar</button>
-  </div>
+    fetch(url)
+      .then(res => res.json())
+      .then(json => {
+        const dados = json.dados;
+        const variacaoBTC = json.variacaoBTC ?? 0;
 
-  <div id="btc-status">📉 BTC 24h: <span id="btc-valor">carregando...</span></div>
-  <div id="status"></div>
-
-  <table id="tabela" class="display nowrap" style="width:100%">
-    <thead><tr id="cabecalho"></tr></thead>
-    <tbody id="corpo"></tbody>
-  </table>
-
-  <script>
-    const API_URL = 'https://script.google.com/macros/s/AKfycbxw1EnlhIP5om52_kd7pns-fHfwTa_5eJr9bVWPXNfyRLTeQAAgvwPJHXAOeufIcP5d/exec';
-
-    function emojiSequencia(qtd) {
-      switch (qtd) {
-        case 0: return '⚪';
-        case 1: return '1️⃣';
-        case 2: return '2️⃣';
-        case 3: return '3️⃣';
-        case 4: return '4️⃣';
-        case 5: return '5️⃣';
-        case 6: return '6️⃣';
-        case 7: return '7️⃣';
-        case 8: return '8️⃣';
-        case 9: return '9️⃣';
-        default: return '🔟';
-      }
-    }
-
-    function contarAltasConsecutivas(array) {
-      let cont = 0;
-      for (let i = array.length - 1; i > 0; i--) {
-        if (array[i] > array[i - 1]) {
-          cont++;
-        } else {
-          break;
+        const btcSpan = document.getElementById('btc-valor');
+        if (btcSpan) {
+          const simbolo = variacaoBTC >= 0 ? '📈' : '📉';
+          btcSpan.innerText = `${simbolo} ${variacaoBTC.toFixed(2)}%`;
         }
-      }
-      return cont;
-    }
 
-    function buscar() {
-      const minVolume = document.getElementById('minVolume').value || 0;
-      const minCap = document.getElementById('minCap').value || 0;
-      const minVar = document.getElementById('minVar').value || 0;
-
-      const url = `${API_URL}?minVolume=${minVolume}&minCap=${minCap}&minVarPercent=${minVar}`;
-      document.getElementById('status').innerText = '🔄 Buscando dados...';
-
-      fetch(url)
-        .then(res => res.json())
-        .then(json => {
-          const dados = json.dados;
-          const variacaoBTC = json.variacaoBTC ?? 0;
-
-          const btcSpan = document.getElementById('btc-valor');
-          if (btcSpan) {
-            const simbolo = variacaoBTC >= 0 ? '📈' : '📉';
-            btcSpan.innerText = `${simbolo} ${variacaoBTC.toFixed(2)}%`;
-          }
-
-          if (!dados || dados.length === 0) {
-            document.getElementById('status').innerText = '⚠️ Nenhum resultado encontrado.';
-            if ($.fn.DataTable.isDataTable('#tabela')) {
-              $('#tabela').DataTable().clear().draw();
-            }
-            return;
-          }
-
-          dados.forEach(linha => {
-            const altasMarketCap = contarAltasConsecutivas(linha.marketCapHistorico || []);
-            const altasVolume = contarAltasConsecutivas(linha.volumeHistorico || []);
-            linha['M'] = emojiSequencia(altasMarketCap);
-            linha['V'] = emojiSequencia(altasVolume);
-          });
-
+        if (!dados || dados.length === 0) {
+          document.getElementById('status').innerText = '⚠️ Nenhum resultado encontrado.';
           if ($.fn.DataTable.isDataTable('#tabela')) {
-            $('#tabela').DataTable().destroy();
+            $('#tabela').DataTable().clear().draw();
           }
+          return;
+        }
 
-          const cabecalho = document.getElementById('cabecalho');
-          const corpo = document.getElementById('corpo');
-          cabecalho.innerHTML = '';
-          corpo.innerHTML = '';
+        if ($.fn.DataTable.isDataTable('#tabela')) {
+          $('#tabela').DataTable().destroy();
+        }
 
-          const colunas = Object.keys(dados[0]);
+        const cabecalho = document.getElementById('cabecalho');
+        const corpo = document.getElementById('corpo');
+        cabecalho.innerHTML = '';
+        corpo.innerHTML = '';
+
+        // Adiciona a coluna "Anotações"
+        const colunas = Object.keys(dados[0]);
+        colunas.push('Anotações');
+
+        // Cabeçalho
+        colunas.forEach(col => {
+          const th = document.createElement('th');
+          th.innerText = col;
+          cabecalho.appendChild(th);
+        });
+
+        // Corpo da tabela
+        let linhasHTML = '';
+        dados.forEach(linha => {
+          let linhaHTML = '<tr>';
 
           colunas.forEach(col => {
-            const th = document.createElement('th');
-            th.innerText = col;
-            cabecalho.appendChild(th);
-          });
-
-          let linhasHTML = '';
-          dados.forEach(linha => {
-            let linhaHTML = '<tr>';
-            colunas.forEach(col => {
+            if (col === 'Anotações') {
+              // Identificador único para salvar anotações, assumindo que a coluna "Symbol" existe
+              const id = linha.Symbol || linha.id || JSON.stringify(linha);
+              const anotacao = recuperarAnotacao(id);
+              linhaHTML += `<td><textarea rows="2" style="width: 100%;" data-id="${id}" placeholder="Escreva sua anotação aqui...">${anotacao}</textarea></td>`;
+            } else {
               const valor = linha[col];
               if (typeof valor === 'string' && valor.startsWith('http')) {
                 linhaHTML += `<td><a href="${valor}" target="_blank" style="color:#0066cc">🔗 Link</a></td>`;
               } else {
                 linhaHTML += `<td>${valor}</td>`;
               }
-            });
-            linhaHTML += '</tr>';
-            linhasHTML += linhaHTML;
-          });
-
-          corpo.innerHTML = linhasHTML;
-
-          $('#tabela').DataTable({
-            destroy: true,
-            paging: false,
-            dom: 'Bfrtip',
-            buttons: ['copy', 'csv'],
-            language: {
-              search: "🔍 Buscar símbolo:",
-              zeroRecords: "Nada encontrado",
-              info: "",
-              infoEmpty: "",
-              infoFiltered: ""
             }
           });
 
-          document.getElementById('status').innerText = `✅ ${dados.length} criptomoedas encontradas.`;
-        })
-        .catch(err => {
-          console.error(err);
-          document.getElementById('status').innerText = '❌ Erro ao buscar os dados.';
+          linhaHTML += '</tr>';
+          linhasHTML += linhaHTML;
         });
-    }
 
-    window.onload = buscar;
-  </script>
-</body>
-</html>
+        corpo.innerHTML = linhasHTML;
+
+        // Adiciona listener para salvar anotações
+        document.querySelectorAll('textarea[data-id]').forEach(textarea => {
+          textarea.addEventListener('input', e => {
+            const id = e.target.getAttribute('data-id');
+            salvarAnotacao(id, e.target.value);
+          });
+        });
+
+        $('#tabela').DataTable({
+          destroy: true,
+          paging: false,
+          dom: 'Bfrtip',
+          buttons: ['copy', 'csv'],
+          language: {
+            search: "🔍 Buscar símbolo:",
+            zeroRecords: "Nada encontrado",
+            info: "",
+            infoEmpty: "",
+            infoFiltered: ""
+          }
+        });
+
+        document.getElementById('status').innerText = `✅ ${dados.length} criptomoedas encontradas.`;
+      })
+      .catch(err => {
+        console.error(err);
+        document.getElementById('status').innerText = '❌ Erro ao buscar os dados.';
+      });
+  }
+
+  window.onload = buscar;
+            </script>
