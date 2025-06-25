@@ -38,28 +38,6 @@
       font-weight: bold;
       color: #006699;
     }
-    .btc-verde {
-      color: green;
-      font-weight: bold;
-    }
-    .btc-vermelho {
-      color: red;
-      font-weight: bold;
-    }
-    .btc-neutro {
-      color: gray;
-      font-weight: bold;
-    }
-    #btcStatus {
-      font-size: 18px;
-      margin: 15px 0;
-    }
-    #btcStatus img {
-      vertical-align: middle;
-      width: 24px;
-      height: 24px;
-      margin-right: 6px;
-    }
     table.dataTable thead th {
       background-color: #333;
       color: white;
@@ -69,6 +47,11 @@
     }
     .filtros {
       margin-bottom: 10px;
+    }
+    #btc-status {
+      font-size: 1.2em;
+      font-weight: bold;
+      margin-bottom: 12px;
     }
   </style>
 </head>
@@ -89,7 +72,7 @@
     <button onclick="buscar()">Buscar</button>
   </div>
 
-  <div id="btcStatus">📉 BTC 24h: carregando...</div>
+  <div id="btc-status">📉 BTC 24h: <span id="btc-valor">carregando...</span></div>
   <div id="status"></div>
 
   <table id="tabela" class="display nowrap" style="width:100%">
@@ -140,16 +123,13 @@
         .then(res => res.json())
         .then(json => {
           const dados = json.dados;
+          const variacaoBTC = json.variacaoBTC ?? 0;
 
-          // ✅ Destaque BTC com ícone
-          const btcValor = parseFloat(json.variacaoBTC || 0);
-          const btcStatus = document.getElementById('btcStatus');
-          const direcao = btcValor > 0 ? '📈' : (btcValor < 0 ? '📉' : '➖');
-          const classe = btcValor > 0 ? 'btc-verde' : (btcValor < 0 ? 'btc-vermelho' : 'btc-neutro');
-          btcStatus.innerHTML = `
-            <img src="https://s2.coinmarketcap.com/static/img/coins/64x64/1.png" alt="BTC">
-            ${direcao} BTC 24h: <span class="${classe}">${btcValor > 0 ? '+' : ''}${btcValor.toFixed(2)}%</span>
-          `;
+          const btcSpan = document.getElementById('btc-valor');
+          if (btcSpan) {
+            const simbolo = variacaoBTC >= 0 ? '📈' : '📉';
+            btcSpan.innerText = `${simbolo} ${variacaoBTC.toFixed(2)}%`;
+          }
 
           if (!dados || dados.length === 0) {
             document.getElementById('status').innerText = '⚠️ Nenhum resultado encontrado.';
@@ -176,6 +156,7 @@
           corpo.innerHTML = '';
 
           const colunas = Object.keys(dados[0]);
+
           colunas.forEach(col => {
             const th = document.createElement('th');
             th.innerText = col;
