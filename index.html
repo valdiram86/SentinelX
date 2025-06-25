@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <title>Criptomoedas Selecionadas</title>
-  
+
   <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css" />
   <style>
     body {
@@ -11,20 +11,11 @@
       background-color: #f4f4f4;
       padding: 20px;
     }
-    h2 {
-      margin-bottom: 10px;
-    }
     .filter-container {
       display: flex;
       gap: 20px;
       align-items: center;
       margin-bottom: 20px;
-    }
-    .filter-container label {
-      font-weight: bold;
-      font-size: 1.1rem;
-      display: flex;
-      flex-direction: column;
     }
     .filter-container input {
       width: 180px;
@@ -35,13 +26,11 @@
       padding: 10px 20px;
       font-size: 1.2rem;
       cursor: pointer;
-      background-color: #007bff;
-      color: white;
-      border: none;
-      border-radius: 4px;
     }
-    #btnBuscar:hover {
-      background-color: #0056b3;
+    input.nota {
+      width: 100%;
+      padding: 4px;
+      font-size: 1rem;
     }
   </style>
 </head>
@@ -50,22 +39,22 @@
   <h2>🔎 Filtrar Criptomoedas Selecionadas</h2>
   <div class="filter-container">
     <label>
-      Volume mínimo (USD):
-      <input type="number" id="filterVolume" min="0" step="any" />
+      Volume mínimo (USD):<br />
+      <input type="number" id="filterVolume" />
     </label>
     <label>
-      Market Cap mínimo (USD):
-      <input type="number" id="filterMarketCap" min="0" step="any" />
+      Market Cap mínimo (USD):<br />
+      <input type="number" id="filterMarketCap" />
     </label>
     <label>
-      Variação mínima (%):
-      <input type="number" id="filterVariation" step="any" />
+      Variação mínima (%):<br />
+      <input type="number" id="filterVariation" />
     </label>
     <button id="btnBuscar">Buscar</button>
   </div>
 
-  <div>
-    <span>📉 BTC 24h: carregando...</span>
+  <div style="margin-bottom: 10px;">
+    📉 BTC 24h: carregando...
   </div>
 
   <table id="cryptoTable" class="display" style="width:100%">
@@ -76,7 +65,7 @@
         <th>Volume (USD)</th>
         <th>Market Cap (USD)</th>
         <th>Variação (%)</th>
-        <!-- Coluna Anotações removida -->
+        <th>Anotações</th>
       </tr>
     </thead>
     <tbody>
@@ -86,6 +75,7 @@
         <td>15,000,000,000</td>
         <td>520,000,000,000</td>
         <td>2.5</td>
+        <td><input type="text" class="nota" placeholder="Digite aqui..."></td>
       </tr>
       <tr>
         <td>Ethereum</td>
@@ -93,8 +83,9 @@
         <td>6,000,000,000</td>
         <td>220,000,000,000</td>
         <td>1.2</td>
+        <td><input type="text" class="nota" placeholder="Digite aqui..."></td>
       </tr>
-      <!-- Mais linhas -->
+      <!-- Adicione aqui mais moedas -->
     </tbody>
   </table>
 
@@ -103,25 +94,24 @@
   <script>
     $(document).ready(function () {
       const table = $('#cryptoTable').DataTable({
-        // Configurações básicas
+        pageLength: 100,
+        lengthMenu: [100, 200, 500, 1000],
         order: [[0, 'asc']]
       });
 
-      // Função filtro customizado
+      // Filtro por valores
       $.fn.dataTable.ext.search.push(function (settings, data) {
-        const volume = parseFloat(data[2].replace(/[^0-9.-]+/g, '')) || 0;       // coluna Volume (índice 2)
-        const marketCap = parseFloat(data[3].replace(/[^0-9.-]+/g, '')) || 0;    // coluna Market Cap (índice 3)
-        const variation = parseFloat(data[4].replace(/[^0-9.-]+/g, '')) || 0;    // coluna Variação (índice 4)
+        const volume = parseFloat(data[2].replace(/[^0-9.-]+/g, '')) || 0;
+        const marketCap = parseFloat(data[3].replace(/[^0-9.-]+/g, '')) || 0;
+        const variation = parseFloat(data[4].replace(/[^0-9.-]+/g, '')) || 0;
 
         const volumeMin = parseFloat($('#filterVolume').val()) || 0;
         const marketCapMin = parseFloat($('#filterMarketCap').val()) || 0;
-        const varMin = parseFloat($('#filterVariation').val());
-        const varMinValue = isNaN(varMin) ? -Infinity : varMin;
+        const varMin = parseFloat($('#filterVariation').val()) || -Infinity;
 
-        return volume >= volumeMin && marketCap >= marketCapMin && variation >= varMinValue;
+        return volume >= volumeMin && marketCap >= marketCapMin && variation >= varMin;
       });
 
-      // Ao clicar no botão, atualiza filtro
       $('#btnBuscar').on('click', function () {
         table.draw();
       });
