@@ -77,6 +77,36 @@
   <script>
     const API_URL = 'https://script.google.com/macros/s/AKfycbyrETXvYZTVrno4GJAHOErpaNqOhH05RMapm7TnpjNp50Y-KeQoLyl2tiW0QQXMdFGi/exec';
 
+    // Converte número de altas consecutivas para emoji
+    function emojiSequencia(qtd) {
+      switch (qtd) {
+        case 0: return '⚪';
+        case 1: return '1️⃣';
+        case 2: return '2️⃣';
+        case 3: return '3️⃣';
+        case 4: return '4️⃣';
+        case 5: return '5️⃣';
+        case 6: return '6️⃣';
+        case 7: return '7️⃣';
+        case 8: return '8️⃣';
+        case 9: return '9️⃣';
+        default: return '🔟';
+      }
+    }
+
+    // Conta quantas vezes consecutivas um valor subiu
+    function contarAltasConsecutivas(array) {
+      let cont = 0;
+      for (let i = array.length - 1; i > 0; i--) {
+        if (array[i] > array[i - 1]) {
+          cont++;
+        } else {
+          break;
+        }
+      }
+      return cont;
+    }
+
     function buscar() {
       const minVolume = document.getElementById('minVolume').value || 0;
       const minCap = document.getElementById('minCap').value || 0;
@@ -100,7 +130,15 @@
             return;
           }
 
-          // Destruir tabela existente (se já existir)
+          // Análise de tendência por emoji
+          dados.forEach(linha => {
+            const altasMarketCap = contarAltasConsecutivas(linha.marketCapHistorico || []);
+            const altasVolume = contarAltasConsecutivas(linha.volumeHistorico || []);
+            linha['📈 Tendência MarketCap'] = emojiSequencia(altasMarketCap);
+            linha['📊 Tendência Volume'] = emojiSequencia(altasVolume);
+          });
+
+          // Destruir tabela existente
           if ($.fn.DataTable.isDataTable('#tabela')) {
             $('#tabela').DataTable().destroy();
           }
@@ -108,15 +146,14 @@
           cabecalho.innerHTML = '';
           corpo.innerHTML = '';
 
-          // Criar cabeçalhos
           const colunas = Object.keys(dados[0]);
+
           colunas.forEach(col => {
             const th = document.createElement('th');
             th.innerText = col;
             cabecalho.appendChild(th);
           });
 
-          // Montar corpo da tabela
           let linhasHTML = '';
           dados.forEach(linha => {
             let linhaHTML = '<tr>';
@@ -134,7 +171,6 @@
 
           corpo.innerHTML = linhasHTML;
 
-          // Recriar DataTable
           $('#tabela').DataTable({
             destroy: true,
             paging: false,
