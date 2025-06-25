@@ -38,15 +38,28 @@
       font-weight: bold;
       color: #006699;
     }
-    #btcStatus {
-      font-size: 20px;
+    .btc-verde {
+      color: green;
       font-weight: bold;
-      margin-bottom: 15px;
     }
-    .btc-verde { color: #2e7d32; }
-    .btc-vermelho { color: #c62828; }
-    .btc-neutro { color: #666666; }
-
+    .btc-vermelho {
+      color: red;
+      font-weight: bold;
+    }
+    .btc-neutro {
+      color: gray;
+      font-weight: bold;
+    }
+    #btcStatus {
+      font-size: 18px;
+      margin: 15px 0;
+    }
+    #btcStatus img {
+      vertical-align: middle;
+      width: 24px;
+      height: 24px;
+      margin-right: 6px;
+    }
     table.dataTable thead th {
       background-color: #333;
       color: white;
@@ -63,8 +76,6 @@
 <body>
   <h2>🔎 Filtrar Criptomoedas Selecionadas</h2>
 
-  <div id="btcStatus">📉 BTC 24h: carregando...</div>
-
   <div class="filtros">
     <label for="minVolume">Volume mínimo (USD):</label>
     <input type="number" id="minVolume" value="1000000">
@@ -78,6 +89,7 @@
     <button onclick="buscar()">Buscar</button>
   </div>
 
+  <div id="btcStatus">📉 BTC 24h: carregando...</div>
   <div id="status"></div>
 
   <table id="tabela" class="display nowrap" style="width:100%">
@@ -87,6 +99,34 @@
 
   <script>
     const API_URL = 'https://script.google.com/macros/s/AKfycbyrETXvYZTVrno4GJAHOErpaNqOhH05RMapm7TnpjNp50Y-KeQoLyl2tiW0QQXMdFGi/exec';
+
+    function emojiSequencia(qtd) {
+      switch (qtd) {
+        case 0: return '⚪';
+        case 1: return '1️⃣';
+        case 2: return '2️⃣';
+        case 3: return '3️⃣';
+        case 4: return '4️⃣';
+        case 5: return '5️⃣';
+        case 6: return '6️⃣';
+        case 7: return '7️⃣';
+        case 8: return '8️⃣';
+        case 9: return '9️⃣';
+        default: return '🔟';
+      }
+    }
+
+    function contarAltasConsecutivas(array) {
+      let cont = 0;
+      for (let i = array.length - 1; i > 0; i--) {
+        if (array[i] > array[i - 1]) {
+          cont++;
+        } else {
+          break;
+        }
+      }
+      return cont;
+    }
 
     function buscar() {
       const minVolume = document.getElementById('minVolume').value || 0;
@@ -100,8 +140,16 @@
         .then(res => res.json())
         .then(json => {
           const dados = json.dados;
-          const cabecalho = document.getElementById('cabecalho');
-          const corpo = document.getElementById('corpo');
+
+          // ✅ Destaque BTC com ícone
+          const btcValor = parseFloat(json.variacaoBTC || 0);
+          const btcStatus = document.getElementById('btcStatus');
+          const direcao = btcValor > 0 ? '📈' : (btcValor < 0 ? '📉' : '➖');
+          const classe = btcValor > 0 ? 'btc-verde' : (btcValor < 0 ? 'btc-vermelho' : 'btc-neutro');
+          btcStatus.innerHTML = `
+            <img src="https://s2.coinmarketcap.com/static/img/coins/64x64/1.png" alt="BTC">
+            ${direcao} BTC 24h: <span class="${classe}">${btcValor > 0 ? '+' : ''}${btcValor.toFixed(2)}%</span>
+          `;
 
           if (!dados || dados.length === 0) {
             document.getElementById('status').innerText = '⚠️ Nenhum resultado encontrado.';
@@ -111,25 +159,23 @@
             return;
           }
 
-          // Destacar BTC
-          const btc = dados.find(d => d['ID'] == 1);
-          if (btc) {
-            const variacao = parseFloat(btc['24h'] || btc['1%'] || '0');
-            const btcStatus = document.getElementById('btcStatus');
-            const direcao = variacao > 0 ? '📈' : (variacao < 0 ? '📉' : '➖');
-            const classe = variacao > 0 ? 'btc-verde' : (variacao < 0 ? 'btc-vermelho' : 'btc-neutro');
-            btcStatus.innerHTML = `${direcao} BTC 24h: <span class="${classe}">${variacao.toFixed(2)}%</span>`;
-          }
+          dados.forEach(linha => {
+            const altasMarketCap = contarAltasConsecutivas(linha.marketCapHistorico || []);
+            const altasVolume = contarAltasConsecutivas(linha.volumeHistorico || []);
+            linha['M'] = emojiSequencia(altasMarketCap);
+            linha['V'] = emojiSequencia(altasVolume);
+          });
 
           if ($.fn.DataTable.isDataTable('#tabela')) {
             $('#tabela').DataTable().destroy();
           }
 
+          const cabecalho = document.getElementById('cabecalho');
+          const corpo = document.getElementById('corpo');
           cabecalho.innerHTML = '';
           corpo.innerHTML = '';
 
           const colunas = Object.keys(dados[0]);
-
           colunas.forEach(col => {
             const th = document.createElement('th');
             th.innerText = col;
