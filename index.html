@@ -38,6 +38,15 @@
       font-weight: bold;
       color: #006699;
     }
+    #btcStatus {
+      font-size: 20px;
+      font-weight: bold;
+      margin-bottom: 15px;
+    }
+    .btc-verde { color: #2e7d32; }
+    .btc-vermelho { color: #c62828; }
+    .btc-neutro { color: #666666; }
+
     table.dataTable thead th {
       background-color: #333;
       color: white;
@@ -53,6 +62,8 @@
 
 <body>
   <h2>🔎 Filtrar Criptomoedas Selecionadas</h2>
+
+  <div id="btcStatus">📉 BTC 24h: carregando...</div>
 
   <div class="filtros">
     <label for="minVolume">Volume mínimo (USD):</label>
@@ -77,36 +88,6 @@
   <script>
     const API_URL = 'https://script.google.com/macros/s/AKfycbyrETXvYZTVrno4GJAHOErpaNqOhH05RMapm7TnpjNp50Y-KeQoLyl2tiW0QQXMdFGi/exec';
 
-    // Converte número de altas consecutivas para emoji
-    function emojiSequencia(qtd) {
-      switch (qtd) {
-        case 0: return '⚪';
-        case 1: return '1️⃣';
-        case 2: return '2️⃣';
-        case 3: return '3️⃣';
-        case 4: return '4️⃣';
-        case 5: return '5️⃣';
-        case 6: return '6️⃣';
-        case 7: return '7️⃣';
-        case 8: return '8️⃣';
-        case 9: return '9️⃣';
-        default: return '🔟';
-      }
-    }
-
-    // Conta quantas vezes consecutivas um valor subiu
-    function contarAltasConsecutivas(array) {
-      let cont = 0;
-      for (let i = array.length - 1; i > 0; i--) {
-        if (array[i] > array[i - 1]) {
-          cont++;
-        } else {
-          break;
-        }
-      }
-      return cont;
-    }
-
     function buscar() {
       const minVolume = document.getElementById('minVolume').value || 0;
       const minCap = document.getElementById('minCap').value || 0;
@@ -130,15 +111,16 @@
             return;
           }
 
-          // Análise de tendência por emoji
-          dados.forEach(linha => {
-            const altasMarketCap = contarAltasConsecutivas(linha.marketCapHistorico || []);
-            const altasVolume = contarAltasConsecutivas(linha.volumeHistorico || []);
-            linha['M'] = emojiSequencia(altasMarketCap);
-            linha['V'] = emojiSequencia(altasVolume);
-          });
+          // Destacar BTC
+          const btc = dados.find(d => d['ID'] == 1);
+          if (btc) {
+            const variacao = parseFloat(btc['24h'] || btc['1%'] || '0');
+            const btcStatus = document.getElementById('btcStatus');
+            const direcao = variacao > 0 ? '📈' : (variacao < 0 ? '📉' : '➖');
+            const classe = variacao > 0 ? 'btc-verde' : (variacao < 0 ? 'btc-vermelho' : 'btc-neutro');
+            btcStatus.innerHTML = `${direcao} BTC 24h: <span class="${classe}">${variacao.toFixed(2)}%</span>`;
+          }
 
-          // Destruir tabela existente
           if ($.fn.DataTable.isDataTable('#tabela')) {
             $('#tabela').DataTable().destroy();
           }
