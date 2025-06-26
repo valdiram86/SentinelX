@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <title>Criptomoedas Selecionadas</title>
 
-  <!-- DataTables + Botões -->
+  <!-- Estilos do DataTable e Botões -->
   <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
   <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.dataTables.min.css">
   <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
@@ -76,23 +76,7 @@
   <div id="status"></div>
 
   <table id="tabela" class="display nowrap" style="width:100%">
-    <thead>
-      <tr>
-        <th>ID</th>
-        <th>SÍMBOLO</th>
-        <th>RANKING</th>
-        <th>VOLUME</th>
-        <th>V%</th>
-        <th>M%</th>
-        <th>MCAP</th>
-        <th>LINK</th>
-        <th>📈 V</th>
-        <th>📊 M</th>
-        <th>1%</th>
-        <th>7%</th>
-        <th>30%</th>
-      </tr>
-    </thead>
+    <thead><tr id="cabecalho"></tr></thead>
     <tbody id="corpo"></tbody>
   </table>
 
@@ -127,25 +111,34 @@
             return;
           }
 
+          if ($.fn.DataTable.isDataTable('#tabela')) {
+            $('#tabela').DataTable().destroy();
+          }
+
+          const cabecalho = document.getElementById('cabecalho');
           const corpo = document.getElementById('corpo');
+          cabecalho.innerHTML = '';
           corpo.innerHTML = '';
+
+          const colunas = Object.keys(dados[0]);
+
+          colunas.forEach(col => {
+            const th = document.createElement('th');
+            th.innerText = col;
+            cabecalho.appendChild(th);
+          });
 
           let linhasHTML = '';
           dados.forEach(linha => {
             let linhaHTML = '<tr>';
-            linhaHTML += `<td>${linha['ID']}</td>`;
-            linhaHTML += `<td>${linha['SÍMBOLO']}</td>`;
-            linhaHTML += `<td>${linha['RANKING']}</td>`;
-            linhaHTML += `<td>${linha['VOLUME']}</td>`;
-            linhaHTML += `<td>${linha['V%']}</td>`;
-            linhaHTML += `<td>${linha['M%']}</td>`;
-            linhaHTML += `<td>${linha['MCAP']}</td>`;
-            linhaHTML += `<td><a href="${linha['LINK']}" target="_blank" style="color:#0066cc">🔗 Link</a></td>`;
-            linhaHTML += `<td>${linha['📈 V']}</td>`;
-            linhaHTML += `<td>${linha['📊 M']}</td>`;
-            linhaHTML += `<td>${linha['1%']}</td>`;
-            linhaHTML += `<td>${linha['7%']}</td>`;
-            linhaHTML += `<td>${linha['30%']}</td>`;
+            colunas.forEach(col => {
+              const valor = linha[col];
+              if (typeof valor === 'string' && valor.startsWith('http')) {
+                linhaHTML += `<td><a href="${valor}" target="_blank" style="color:#0066cc">🔗 Link</a></td>`;
+              } else {
+                linhaHTML += `<td>${valor}</td>`;
+              }
+            });
             linhaHTML += '</tr>';
             linhasHTML += linhaHTML;
           });
